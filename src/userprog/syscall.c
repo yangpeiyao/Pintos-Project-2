@@ -20,20 +20,20 @@ syscall_handler (struct intr_frame *f)
   
   switch (systemCallNumber) {
     case SYS_HALT:
-      halt();
+      halt()
       break;
     case SYS_EXIT:
       int status = *(esp + 1)
-      exit(status);
+      exit(status)
       break;
     case SYS_EXEC:
       break;
     case SYS_WAIT:
       break;
     case SYS_CREATE:
-      const char *fileName = *(esp + 1);
-      unsigned fileSize = *(esp + 2);
-      f->eax = create(fileName, fileSize);
+      const char *fileName = *(esp + 1)
+      unsigned fileSize = *(esp + 2)
+      f->eax = create(fileName, fileSize)
       break;
     case SYS_REMOVE:
       break;
@@ -78,7 +78,7 @@ int wait (pid_t pid) {
 
 //Creates a new file called file initially initial_size bytes in size. Returns true if successful, false otherwise. Creating a new file does not open it: opening the new file is a separate operation which would require a open system call.
 bool create (const char *file, unsigned initial_size) {
-  if (file == NULL) { return false; }
+  if (file == NULL) { return false }
   return filesys_create(name, size); //call filesys_create
 }
 
