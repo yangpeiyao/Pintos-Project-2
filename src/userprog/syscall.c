@@ -31,9 +31,9 @@ syscall_handler (struct intr_frame *f)
     case SYS_WAIT:
       break;
     case SYS_CREATE:
-      const char *fileName = *(esp + 1)
-      unsigned fileSize = *(esp + 2)
-      f->eax = create(fileName, fileSize)
+      const char *fileName = *(esp + 1);
+      unsigned fileSize = *(esp + 2);
+      f->eax = create(fileName, fileSize);
       break;
     case SYS_REMOVE:
       break;
@@ -58,17 +58,36 @@ syscall_handler (struct intr_frame *f)
 
 //Terminates Pintos by calling shutdown_power_off() (declared in threads/init.h). This should be seldom used, because you lose some information about possible deadlock situations, etc.
 void halt (void) {
-  
+  shutdown_power_off();
 }
 
 //Terminates the current user program, returning status to the kernel. If the process's parent waits for it (see below), this is the status that will be returned. Conventionally, a status of 0 indicates success and nonzero values indicate errors.
 void exit (int status) {
-  
+  thread_exit ();
 }
 
 //Runs the executable whose name is given in cmd_line, passing any given arguments, and returns the new process's program id (pid). Must return pid -1, which otherwise should not be a valid pid, if the program cannot load or run for any reason. Thus, the parent process cannot return from the exec until it knows whether the child process successfully loaded its executable. You must use appropriate synchronization to ensure this.
 pid_t exec (const char *cmd_line) {
-  
+    enum intr_level old_level;
+    struct thread *t = thread_current();
+    tid_t *threadID = process_execute(cmd_line);
+    struct child_Thread *child = thread_get_child(threadID);
+    old_level = intr_disable();
+    while (child_Thread.load_status != loaded )
+    {
+        
+    }
+    if(child_Thread.load_status == failed_load)
+    {
+        return -1;
+    }
+    else{
+        t.child = child;
+        t.child.child_tid = threadID;
+        list_push_back(t.child_threads ,&child.elem )
+    return threadID;
+    }
+    intr_set_level (old_level);
 }
 
 //Waits for a child process pid and retrieves the child's exit status. More in documentation on this
@@ -78,23 +97,29 @@ int wait (pid_t pid) {
 
 //Creates a new file called file initially initial_size bytes in size. Returns true if successful, false otherwise. Creating a new file does not open it: opening the new file is a separate operation which would require a open system call.
 bool create (const char *file, unsigned initial_size) {
-  if (file == NULL) { return false }
-  return filesys_create(name, size); //call filesys_create
+    if (file == NULL) { return false; }
+  return filesys_create(file, size); //call filesys_create
 }
 
 //Deletes the file called file. Returns true if successful, false otherwise. A file may be removed regardless of whether it is open or closed, and removing an open file does not close it. See Removing an Open File, for details.
 bool remove (const char *file) {
+  if (file == NULL) {return false;}
+  return filesys_remove (file);
   
 }
 
 //Opens the file called file. Returns a nonnegative integer handle called a "file descriptor" (fd), or -1 if the file could not be opened.
 //File descriptors numbered 0 and 1 are reserved for the console: fd 0 (STDIN_FILENO) is standard input, fd 1 (STDOUT_FILENO) is standard output. The open system call will never return either of these file descriptors, which are valid as system call arguments only as explicitly described below.
 int open (const char *file) {
+  if (file == NULL) {return false;}
+  filesys_open (file);
   
+  return
 }
 
 //Returns the size, in bytes, of the file open as fd.
 int filesize (int fd) {
+  
   
 }
 

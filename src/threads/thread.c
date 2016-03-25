@@ -203,6 +203,12 @@ thread_create (const char *name, int priority,
   sf = alloc_frame (t, sizeof *sf);
   sf->eip = switch_entry;
   sf->ebp = 0;
+    
+    
+    t->parent_thread = thread_tid();
+    struct child_process *cp = add_child_process(t->tid);
+    t->cp = cp;
+    
 
   intr_set_level (old_level);
 
@@ -469,6 +475,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
+    list_init(t->child_threads);
   list_push_back (&all_list, &t->allelem);
 }
 
