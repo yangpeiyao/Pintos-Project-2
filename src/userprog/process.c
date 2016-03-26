@@ -52,10 +52,8 @@ start_process (void *cmdline)
 {
   struct intr_frame if_;
   bool success;
-
-  // Get actual file name (first parsed token)
-  char *save_ptr;
-  char *file_name = strtok_r(cmdline, " ", &save_ptr);
+  
+  char *file_name = getFileName(cmdline);
   
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
@@ -77,6 +75,11 @@ start_process (void *cmdline)
      and jump to it. */
   asm volatile ("movl %0, %%esp; jmp intr_exit" : : "g" (&if_) : "memory");
   NOT_REACHED ();
+}
+
+char *getFileName(char *cmdline) {
+    char *save_ptr;
+    return strtok_r(cmdline, " ", &save_ptr);
 }
 
 /* Waits for thread TID to die and returns its exit status.  If
@@ -228,7 +231,8 @@ load (const char *cmdline, void (**eip) (void), void **esp)
   
   
   /* Open executable file. */
-  char *file_name = strtok_r((char *)cmdline, " ", NULL);
+  char *file_name = getFileName(cmdline);
+  
   file = filesys_open (file_name);
   if (file == NULL) 
     {
@@ -454,9 +458,9 @@ setup_stack (void **esp, char* cmdline)
   char **argv = 128 * sizeof(char *);
   int argc = 0;
   
-  char **save_ptr;
-  char *token = strtok_r (cmdline, " ", save_ptr);
-    token = strtok_r (NULL, " ", save_ptr);
+  char *save_ptr;
+  char *token = strtok_r (cmdline, " ", &save_ptr);
+  token = strtok_r (NULL, " ", &save_ptr);
 
   while (token != NULL) {
     argc++;
@@ -465,7 +469,7 @@ setup_stack (void **esp, char* cmdline)
 
     memcpy(*esp, token, strlen(token) + 1);
       
-    token = strtok_r (NULL, " ", save_ptr);
+    token = strtok_r (NULL, " ", &save_ptr);
   }
   
   argv[argc] = 0;

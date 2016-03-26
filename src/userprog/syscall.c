@@ -88,7 +88,6 @@ bool create (const char *file, unsigned initial_size) {
 bool remove (const char *file) {
   if (file == NULL) {return false;}
   return filesys_remove (file);
-  
 }
 
 //Opens the file called file. Returns a nonnegative integer handle called a "file descriptor" (fd), or -1 if the file could not be opened.
