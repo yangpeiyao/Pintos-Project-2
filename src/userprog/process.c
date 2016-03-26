@@ -19,7 +19,7 @@
 #include "threads/vaddr.h"
 
 static thread_func start_process NO_RETURN;
-static bool load (const char *cmdline, void (**eip) (void), void **esp, char *arg_remainder);
+static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
@@ -63,7 +63,7 @@ start_process (void *file_name_)
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
-  success = load (file_name, &if_.eip, &if_.esp, arg_remainder);
+  success = load (file_name, &if_.eip, &if_.esp);
 
   /* If load failed, quit. */
   palloc_free_page (file_name);
@@ -200,20 +200,19 @@ struct Elf32_Phdr
 #define PF_W 2          /* Writable. */
 #define PF_R 4          /* Readable. */
 
+static bool setup_stack (void **esp, char* cmdline);
 static bool validate_segment (const struct Elf32_Phdr *, struct file *);
 static bool load_segment (struct file *file, off_t ofs, uint8_t *upage,
                           uint32_t read_bytes, uint32_t zero_bytes,
                           bool writable);
 
-static bool setup_stack (void **esp, const char* file_name,
-                         char** arg_remainder);
 
 /* Loads an ELF executable from FILE_NAME into the current thread.
    Stores the executable's entry point into *EIP
    and its initial stack pointer into *ESP.
    Returns true if successful, false otherwise. */
 bool
-load (const char *file_name, void (**eip) (void), void **esp, char *arg_remainder)
+load (const char *cmdline, void (**eip) (void), void **esp)
 {
   struct thread *t = thread_current ();
   struct Elf32_Ehdr ehdr;
@@ -229,6 +228,7 @@ load (const char *file_name, void (**eip) (void), void **esp, char *arg_remainde
   process_activate ();
   
   /* Open executable file. */
+  char *file_name = strtok_r((char *)cmdline, " ", NULL);
   file = filesys_open (file_name);
   if (file == NULL) 
     {
@@ -309,7 +309,7 @@ load (const char *file_name, void (**eip) (void), void **esp, char *arg_remainde
     }
 
   /* Set up stack. */
-  if (!setup_stack (esp, file_name, arg_remainder))
+  if (!setup_stack (esp, (char *)cmdline)) //the hackery
     goto done;
 
   /* Start address. */
@@ -433,7 +433,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 
 
 static bool
-setup_stack (void **esp, const char* file_name, char** save_ptr)
+setup_stack (void **esp, char* cmdline)
 {
   uint8_t *kpage;
   bool success = false;
@@ -454,15 +454,17 @@ setup_stack (void **esp, const char* file_name, char** save_ptr)
   char **argv = 128 * sizeof(char *);
   int argc = 0;
   
-  char *token = file_name;
+  char **arg_remainder;
+  char *token = strtok_r (cmdline, " ", arg_remainder);
   
   while (token != NULL) {
+    token = strtok_r (NULL, " ", arg_remainder);
+
+    argc++;
     *esp -= strlen(token) + 1;
     argv[argc] = *esp;
-    argc++;
 
     memcpy(*esp, token, strlen(token) + 1);
-    token = strtok_r (NULL, " ", arg_remainder)
   }
   
   argv[argc] = 0;
@@ -473,7 +475,8 @@ setup_stack (void **esp, const char* file_name, char** save_ptr)
     memcpy(*esp, &argv[argc], alignment);
   }
   
-  for (int i = argc; i >= 0; i--) {
+  int i;
+  for (i = argc; i >= 0; i--) {
     *esp -= sizeof(char *);
     memcpy(*esp, &argv[i], sizeof(char *));
   }

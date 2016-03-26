@@ -100,24 +100,7 @@ struct thread
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
-      
-      struct child_Thread *child;
-      struct list child_threads;
-     tid_t tid2;
   };
-enum load_status
-{
-    loaded,     /* Running thread. */
-    failed_load/* About to be destroyed. */
-};
-
-
-struct child_Thread{
-    int child_tid;
-    enum load_status status;
-    struct list_elem elem;
-    
-};
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
@@ -126,11 +109,6 @@ extern bool thread_mlfqs;
 
 void thread_init (void);
 void thread_start (void);
-
-struct child_Thread* thread_get_child(int tid);
-enum load_status* get_child_status( stuct child_Thread *child );
-
-
 
 void thread_tick (void);
 void thread_print_stats (void);
