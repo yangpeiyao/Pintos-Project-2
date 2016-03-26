@@ -467,7 +467,7 @@ setup_stack (void **esp, char* cmdline)
     *esp -= strlen(token) + 1;
     argv[argc] = *esp;
 
-    memcpy(*esp, token, strlen(token) + 1);
+    strlcpy(*esp, token, strlen(token) + 1);
       
     token = strtok_r (NULL, " ", &save_ptr);
   }
@@ -487,9 +487,6 @@ setup_stack (void **esp, char* cmdline)
   
   *esp -= sizeof(int);
   memcpy(*esp, &argc, sizeof(int));
-
-  *esp -= sizeof(void *);
-  memcpy(*esp, &argv[argc], sizeof(void *));
 
   return success;
 }
