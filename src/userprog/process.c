@@ -473,7 +473,7 @@ setup_stack (void **esp, const char* file_name, char** save_ptr)
     memcpy(*esp, &argv[argc], alignment);
   }
   
-  for (i = argc; i >= 0; i--) {
+  for (int i = argc; i >= 0; i--) {
     *esp -= sizeof(char *);
     memcpy(*esp, &argv[i], sizeof(char *));
   }
