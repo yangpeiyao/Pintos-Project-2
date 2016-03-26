@@ -48,25 +48,24 @@ process_execute (const char *file_name)
 /* A thread function that loads a user process and starts it
    running. */
 static void
-start_process (void *file_name_)
+start_process (void *cmdline)
 {
-  char *file_name = file_name_;
   struct intr_frame if_;
   bool success;
 
   // Get actual file name (first parsed token)
-  char *arg_remainder;
-  file_name = strtok_r(file_name, " ", &arg_remainder);
+  char *save_ptr;
+  char *file_name = strtok_r(cmdline, " ", &save_ptr);
   
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
-  success = load (file_name, &if_.eip, &if_.esp);
+  success = load (cmdline, &if_.eip, &if_.esp);
 
   /* If load failed, quit. */
-  palloc_free_page (file_name);
+  palloc_free_page (cmdline);
   if (!success) 
     thread_exit ();
 
@@ -226,6 +225,7 @@ load (const char *cmdline, void (**eip) (void), void **esp)
   if (t->pagedir == NULL) 
     goto done;
   process_activate ();
+  
   
   /* Open executable file. */
   char *file_name = strtok_r((char *)cmdline, " ", NULL);
@@ -454,17 +454,18 @@ setup_stack (void **esp, char* cmdline)
   char **argv = 128 * sizeof(char *);
   int argc = 0;
   
-  char **arg_remainder;
-  char *token = strtok_r (cmdline, " ", arg_remainder);
-  
-  while (token != NULL) {
-    token = strtok_r (NULL, " ", arg_remainder);
+  char **save_ptr;
+  char *token = strtok_r (cmdline, " ", save_ptr);
+    token = strtok_r (NULL, " ", save_ptr);
 
+  while (token != NULL) {
     argc++;
     *esp -= strlen(token) + 1;
     argv[argc] = *esp;
 
     memcpy(*esp, token, strlen(token) + 1);
+      
+    token = strtok_r (NULL, " ", save_ptr);
   }
   
   argv[argc] = 0;
