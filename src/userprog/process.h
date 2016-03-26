@@ -8,6 +8,6 @@ int process_wait (tid_t);
 void process_exit (void);
 void process_activate (void);
 
-char *getFileName(char *cmdline);
+char *getFileName(const char *cmdline);
 
 #endif /* userprog/process.h */

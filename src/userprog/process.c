@@ -77,9 +77,9 @@ start_process (void *cmdline)
   NOT_REACHED ();
 }
 
-char *getFileName(char *cmdline) {
+char *getFileName(const char *cmdline) {
     char *save_ptr;
-    return strtok_r(cmdline, " ", &save_ptr);
+    return strtok_r((char *)cmdline, " ", &save_ptr);
 }
 
 /* Waits for thread TID to die and returns its exit status.  If
@@ -477,23 +477,17 @@ setup_stack (void **esp, char* cmdline)
   int alignment = (int) *esp % 4;
   if (alignment != 0) {
     *esp -= alignment;
-    memcpy(*esp, &argv[argc], alignment);
   }
   
   int i;
   for (i = argc; i >= 0; i--) {
     *esp -= sizeof(char *);
-    memcpy(*esp, &argv[i], sizeof(char *));
+    *(char *)esp = argv[i];
   }
   
-  token = *esp;
-  *esp -= sizeof(char **);
-  memcpy(*esp, &token, sizeof(char **));
-  
   *esp -= sizeof(int);
-  *(int *)esp = argc;
-  //memcpy(*esp, &argc, sizeof(int));
-  
+  memcpy(*esp, &argc, sizeof(int));
+
   *esp -= sizeof(void *);
   memcpy(*esp, &argv[argc], sizeof(void *));
 

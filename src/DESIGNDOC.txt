@@ -32,23 +32,44 @@ Peiyao Yang <py108@rutgers.edu>
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+-None added
+
 ---- ALGORITHMS ----
 
 >> A2: Briefly describe how you implemented argument parsing.  How do
 >> you arrange for the elements of argv[] to be in the right order?
 
-Argument parsing using the strtok_r to separate the command line input string
-into its constituent arguments. 
+Argument parsing uses the strtok_r function to separate the command line input string
+into its constituent arguments. They are stored in a temporary vector of arguments. 
+Then, I loop over this vector in reverse order and push them on to the stack.
+This allows them to be placed on the stack in the correct order.
+
 
 ---- RATIONALE ----
 
 >> A3: Why does Pintos implement strtok_r() but not strtok()?
 
-
+strtok_r is the more safe version, so if strtok_r is implemented, there is no reason 
+to implement the less safe version. It is safe in that it provides a save pointer as 
+an argument, instead of in some global mutable state that would be shared between threads.
+Since there is no global mutable state, and the state is instead provided in the save pointer,
+there is no competition between threads.
 
 >> A4: In Pintos, the kernel separates commands into a executable name
 >> and arguments.  In Unix-like systems, the shell does this
 >> separation.  Identify at least two advantages of the Unix approach.
+
+
+I would say two reasons for this approach would be encapsulation, and future maintenance. 
+By having the code not in the kernel, first of all we can eliminate and dependence between the 
+kernel and argument parsing. There is no reason for our kernel to be dependent on arguments 
+being in a certain order.
+
+Also, by doing this encapsulation, in the future when we want to make a change to argument parsing,
+we can make this change to the codebase of the shell, and not the kernel. In fact we would not 
+need to recompile the kernel to adopt a different argument scheme, we would only need to recompile
+the shell, and our new argument scheme would just work.
+
 
 			     SYSTEM CALLS
 			     ============
@@ -123,6 +144,7 @@ the quarter.
 
 >> In your opinion, was this assignment, or any one of the three problems
 >> in it, too easy or too hard?  Did it take too long or too little time?
+very hard
 
 >> Did you find that working on a particular part of the assignment gave
 >> you greater insight into some aspect of OS design?
